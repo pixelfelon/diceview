@@ -126,7 +126,7 @@ class VisionThread(threading.Thread):
 			camidx = self.camidx
 		
 		self._cap = cv2.VideoCapture(camidx)
-		time.sleep(1)
+		#time.sleep(1)
 		self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 		self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 		

@@ -19,8 +19,12 @@ import time
 from enum import Enum
 
 import tkinter
+from tkinter import W, E, N, S
 import cv2
 from PIL import Image, ImageTk
+import seaborn as sns
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 from vision import VisionThread
 from die import Die
@@ -65,15 +69,39 @@ class DiceviewApp:
 	def __init__(self):
 		self.root = tkinter.Tk()
 		self.root.title("diceview")
-		#self.root.state("zoomed")
+		self.root.state("zoomed")
 		self.root.focus_set()
 		
-		self.root.configure(bg="#555")
-		self.cframe = tkinter.Frame(self.root, bg="#555", width=200)
-		self.cframe.pack(fill=tkinter.Y, padx=10, side=tkinter.LEFT)
-		self.cframe.pack_propagate(0)
+		self.root.configure(bg="#ddd")
+		self.root.rowconfigure(0, minsize = 100, weight = 1)
+		self.root.rowconfigure(1, minsize = 100, weight = 1)
+		self.root.rowconfigure(2, minsize = 100, weight = 1)
+		self.root.rowconfigure(3, minsize = 100, weight = 1)
+		self.root.columnconfigure(0, minsize = 200, weight = 2)
+		self.root.columnconfigure(1, minsize = 200, weight = 1)
+		self.root.grid_propagate(False)
 		
-		self.vframe = tkinter.Label(self.root, bd=0, bg='#222')
+		self._nullfig = Figure()
+		self.graph1 = FigureCanvasTkAgg(self._nullfig, master=self.root)
+		self.graph2 = FigureCanvasTkAgg(self._nullfig, master=self.root)
+		self.graph3 = FigureCanvasTkAgg(self._nullfig, master=self.root)
+		self.graph4 = FigureCanvasTkAgg(self._nullfig, master=self.root)
+		self.graph_chi = FigureCanvasTkAgg(self._nullfig, master=self.root)
+		self.graph1.get_tk_widget().grid(row = 0, column = 0, sticky=W+E+N+S, padx=5, pady=5)
+		self.graph2.get_tk_widget().grid(row = 1, column = 0, sticky=W+E+N+S, padx=5, pady=5)
+		self.graph3.get_tk_widget().grid(row = 2, column = 0, sticky=W+E+N+S, padx=5, pady=5)
+		self.graph4.get_tk_widget().grid(row = 3, column = 0, sticky=W+E+N+S, padx=5, pady=5)
+		self.graph_chi.get_tk_widget().grid(row = 0, column = 1, rowspan = 2, sticky=W+E+N+S, padx=5, pady=5)
+		
+		self.infoframe = tkinter.Frame(self.root, bg="#000")
+		self.infoframe.grid(row = 2, column = 1, rowspan = 2, sticky=W+E+N+S, padx=5, pady=5)
+		self.infoframe.grid_propagate(False)
+		
+		self.statframe = tkinter.Frame(self.infoframe, bg="#eee", width=200)
+		self.statframe.pack(fill=tkinter.Y, padx=10, side=tkinter.LEFT)
+		self.statframe.pack_propagate(0)
+		
+		self.vframe = tkinter.Label(self.infoframe, bd=0, bg='#222')
 		self.vframe.pack(fill="both", expand=True)
 		
 		self.vision = VisionThread()
@@ -104,6 +132,7 @@ class DiceviewApp:
 		self.root.after(10, self.tick)
 	
 	def show_frame(self, frame):
+		cv2.imshow("eeeeee", frame)
 		size = clamp_aspect(16.0 / 9.0, self.vframe.winfo_width(), self.vframe.winfo_height())
 		frame = cv2.resize(frame, size)
 		frame = Image.fromarray(frame)
@@ -115,9 +144,9 @@ class DiceviewApp:
 		pass
 	
 	def shutdown(self):
+		self.root.destroy()
 		self.vision.stop()
 		self.vision.join(timeout = 10)
-		self.root.destroy()
 		exit(0)
 	
 	def run(self):

@@ -22,4 +22,4 @@ class Motion(object):
 	
 	def roll(self):
 		# Block until dice roll actuation is complete.
-		time.sleep(1)
+		time.sleep(0.1)
