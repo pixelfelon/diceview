@@ -13,11 +13,13 @@
 #
 ###############################################################################
 
-def initialize():
-	# Set up PWM or whatever for the servo.
-	# If sensible this could return a handle/structure and then diceview can pass that to roll_dice.
-	pass
+import time
 
-def roll_dice():
-	# Block until dice roll actuation is complete.
-	pass
+class Motion(object):
+	def __init__(self):
+		# Set up PWM or whatever for the servo.
+		pass
+	
+	def roll(self):
+		# Block until dice roll actuation is complete.
+		time.sleep(1)
