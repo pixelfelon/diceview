@@ -13,14 +13,14 @@
 #
 ###############################################################################
 
+import random
 import threading
-import time
 import cv2
 from motion import Motion
 
 
 class VisionThread(threading.Thread):
-	def __init__(self, height = 720, width = 1280, camidx = 0, group=None, target=None, name=None):
+	def __init__(self, height=720, width=1280, camidx=0, group=None, target=None, name=None):
 		super(VisionThread, self).__init__(group=group, target=target, name=name)
 		
 		self.camlock = threading.Condition()
@@ -101,8 +101,6 @@ class VisionThread(threading.Thread):
 			self.conlock.notify()
 	
 	def wait_results(self):
-		dice = []
-		frame = None
 		with self.reslock:
 			if not self.fresh:
 				self.reslock.wait_for(lambda: self.fresh)
@@ -111,7 +109,7 @@ class VisionThread(threading.Thread):
 			frame = self.frame
 		return dice, frame
 	
-	def change_cam(self, camidx = 0, width = 1280, height = 720):
+	def change_cam(self, camidx=0, width=1280, height=720):
 		with self.camlock:
 			self.camidx = camidx
 			self.width = width
@@ -126,10 +124,10 @@ class VisionThread(threading.Thread):
 			camidx = self.camidx
 		
 		self._cap = cv2.VideoCapture(cv2.CAP_DSHOW + camidx)
-		#time.sleep(1)
+		# time.sleep(1)
 		self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 		self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-		
+	
 	def _cam_stop(self):
 		self._cap.release()
 		self._cap = None
@@ -146,4 +144,17 @@ class VisionThread(threading.Thread):
 		#		the first element of tuple will be some identifier, i.e. number of sides or color.
 		#		the second element will be the number rolled. THIS FUNCTION SHOULD INVERT IT FROM THE BOTTOM VIEW
 		#	a version of the source image with additional cool markup.
-		return ([(0, 0)], image)
+		
+		# Generate sample data.
+		count = random.randrange(1, 4)
+		out = []
+		for i in range(count):
+			sides = random.choice([4, 6, 8, 12, 20])
+			roll = random.randrange(1, sides)
+			out.append((sides, roll))
+		
+		# Modify image.
+		org = (int(image.shape[1] / 2), int(image.shape[0] / 2))
+		cv2.putText(image, "Sample Text", org, cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 255), 3, cv2.LINE_AA)
+		
+		return (out, image)
