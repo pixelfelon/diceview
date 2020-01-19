@@ -16,6 +16,7 @@
 import numpy as np
 from scipy import stats
 
+
 class Die(object):
 	def __init__(self, name, sides):
 		self.name = name

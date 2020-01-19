@@ -140,14 +140,14 @@ class VisionThread(threading.Thread):
 	def _process_image(image):
 		# Process an opencv image to find dice.
 		# Will return two values:
-		#	a list of 20-sided dice rolls.
-		#	a version of the source image with additional cool markup.
+		# - a list of 20-sided dice rolls.
+		# - a version of the source image with additional cool markup.
 		
 		# Generate sample data.
 		count = random.randrange(1, 4)
 		out = []
 		for i in range(count):
-			roll = random.randrange(1, 20)
+			roll = random.randrange(1, 21)
 			out.append(roll)
 		
 		# Modify image.
