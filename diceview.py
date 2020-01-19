@@ -56,7 +56,15 @@ class DiceviewApp:
 	def __init__(self):
 		self.root = tkinter.Tk()
 		self.root.title("diceview")
-		self.root.state("zoomed")
+		try:
+			self.root.state("zoomed")
+		except (tkinter.TclError):
+
+			pass
+
+			m = self.root.maxsize()
+
+			self.root.geometry('{}x{}+0+0'.format(*m))
 		self.root.focus_set()
 		
 		self.root.configure(bg="#ddd", padx=self.PADDING, pady=self.PADDING)
