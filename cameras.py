@@ -15,6 +15,8 @@
 
 import cv2
 import platform
+import numpy as np
+import urllib.request
 
 
 class BaseCam(object):
@@ -109,8 +111,28 @@ class USBCam(BaseCam):
 		return frame
 
 
+class WebCam(BaseCam):
+	def __init__(self, url="http://192.168.10.2:8000/out.jpg"):
+		self.url = url
+	
+	def start(self):
+		pass
+	
+	def stop(self):
+		pass
+	
+	def ready(self):
+		return True
+	
+	def get_frame(self):
+		data = urllib.request.urlopen(self.url)
+		bytes = np.asarray(bytearray(data.read()), dtype=np.uint8)
+		frame = cv2.imdecode(bytes, -1)
+		return frame
+
+
 def get_best_cam():
 	if platform.os.name == "nt":
-		return USBCam
+		return WebCam
 	else:
 		return JetsonCam

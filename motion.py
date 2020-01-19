@@ -38,6 +38,7 @@ class Motion(object):
 			time.sleep(1)
 			self.ser.write('s170\r\n'.encode())
 			self.ser.flush()
+			time.sleep(1)
 		else:
 			time.sleep(0.5)
 	
