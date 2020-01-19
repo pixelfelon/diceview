@@ -103,7 +103,9 @@ class USBCam(BaseCam):
 		return self._cap is not None and self._cap.isOpened()
 	
 	def get_frame(self):
-		_, frame = self._cap.read()
+		retval, frame = self._cap.read()
+		if not retval:
+			frame = None
 		return frame
 
 

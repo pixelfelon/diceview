@@ -163,8 +163,12 @@ class DiceviewApp:
 		self.actuations += 1
 		for roll in dice:
 			self.die.add_roll(roll)
-		self.chi_history.append(self.die.chi_squared())
+		
 		self.sf_vars["Actuations"].configure(text="{:d}".format(self.actuations))
+		if self.die.rolls() < 1:
+			return
+		
+		self.chi_history.append(self.die.chi_squared())
 		self.sf_vars["Dice Rolls"].configure(text="{:d}".format(self.die.rolls()))
 		self.sf_vars["Average Roll"].configure(text="{:2.2f}".format(self.die.average()))
 		self.sf_vars["Chi-Squared"].configure(text="{:2.2f}".format(self.chi_history[-1]))
