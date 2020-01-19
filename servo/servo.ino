@@ -18,9 +18,9 @@
 
 Servo servo;
 
-int smin = 575;
-int smax = 2218;
-int sang = 90;
+int smin = 899;
+int smax = 2077;
+int sang = 170;
 
 
 void setup ()
