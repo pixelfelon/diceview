@@ -19,13 +19,39 @@ import cv2
 from motion import Motion
 
 
+def gstreamer_pipeline(
+	capture_width=3264,
+	capture_height=2464,
+	display_width=3264,
+	display_height=2464,
+	framerate=21,
+	flip_method=0
+):
+	return (
+		"nvarguscamerasrc ! "
+		"video/x-raw(memory:NVMM), "
+		"width=(int)%d, height=(int)%d, "
+		"wbmode=0, "
+		"format=(string)NV12, framerate=(fraction)%d/1 ! "
+		"nvvidconv flip-method=%d ! "
+		"video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+		"videoconvert ! "
+		"video/x-raw, format=(string)BGR ! appsink"
+		% (
+			capture_width,
+			capture_height,
+			framerate,
+			flip_method,
+			display_width,
+			display_height
+		)
+	)
+
+
 class VisionThread(threading.Thread):
-	def __init__(self, height=720, width=1280, camidx=0, group=None, target=None, name=None):
+	def __init__(self, group=None, target=None, name=None):
 		super(VisionThread, self).__init__(group=group, target=target, name=name)
 		
-		self.camlock = threading.Condition()
-		self.width, self.height = width, height
-		self.camidx = camidx
 		self._cap = None
 		
 		self.conlock = threading.Condition()
@@ -109,24 +135,14 @@ class VisionThread(threading.Thread):
 			frame = self.frame
 		return dice, frame
 	
-	def change_cam(self, camidx=0, width=1280, height=720):
-		with self.camlock:
-			self.camidx = camidx
-			self.width = width
-			self.height = height
+	def change_cam(self):
 		self.restart()
 	
 	def _cam_start(self):
-		# Camera
-		with self.camlock:
-			width = self.width
-			height = self.height
-			camidx = self.camidx
-		
-		self._cap = cv2.VideoCapture(cv2.CAP_DSHOW + camidx)
-		# time.sleep(1)
-		self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-		self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+		cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+		if not cap.isOpened():
+			print("Couldn't open camera!")
+			self.restart()
 	
 	def _cam_stop(self):
 		self._cap.release()
@@ -134,7 +150,12 @@ class VisionThread(threading.Thread):
 	
 	def _get_frame(self):
 		_, frame = self._cap.read()
-		return frame
+		c_size = 0.35
+		w = int(frame.shape[1] * c_size)
+		h = int(frame.shape[0] * c_size)
+		x = int(frame.shape[1] * 0.5 - w * 0.5)
+		y = int(frame.shape[0] * 0.5 - h * 0.5) + 50
+		return frame[y:y+h, x:x+w]
 	
 	@staticmethod
 	def _process_image(image):
