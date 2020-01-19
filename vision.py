@@ -125,7 +125,7 @@ class VisionThread(threading.Thread):
 			height = self.height
 			camidx = self.camidx
 		
-		self._cap = cv2.VideoCapture(camidx)
+		self._cap = cv2.VideoCapture(cv2.CAP_DSHOW + camidx)
 		#time.sleep(1)
 		self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 		self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -136,8 +136,6 @@ class VisionThread(threading.Thread):
 	
 	def _get_frame(self):
 		_, frame = self._cap.read()
-		frame = cv2.flip(frame, 1)
-		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 		return frame
 	
 	@staticmethod

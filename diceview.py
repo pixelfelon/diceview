@@ -99,10 +99,10 @@ class DiceviewApp:
 		
 		self.statframe = tkinter.Frame(self.infoframe, bg="#eee", width=200)
 		self.statframe.pack(fill=tkinter.Y, padx=10, side=tkinter.LEFT)
-		self.statframe.pack_propagate(0)
 		
 		self.vframe = tkinter.Label(self.infoframe, bd=0, bg='#222')
-		self.vframe.pack(fill="both", expand=True)
+		self.vframe.pack(fill="both", expand = True)
+		self.vframe.grid_propagate(False)
 		
 		self.vision = VisionThread()
 		self.vision.start()
@@ -132,7 +132,7 @@ class DiceviewApp:
 		self.root.after(10, self.tick)
 	
 	def show_frame(self, frame):
-		cv2.imshow("eeeeee", frame)
+		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 		size = clamp_aspect(16.0 / 9.0, self.vframe.winfo_width(), self.vframe.winfo_height())
 		frame = cv2.resize(frame, size)
 		frame = Image.fromarray(frame)
