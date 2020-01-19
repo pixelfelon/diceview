@@ -140,18 +140,15 @@ class VisionThread(threading.Thread):
 	def _process_image(image):
 		# Process an opencv image to find dice.
 		# Will return two values:
-		#	a list of tuples representing dice.
-		#		the first element of tuple will be some identifier, i.e. number of sides or color.
-		#		the second element will be the number rolled. THIS FUNCTION SHOULD INVERT IT FROM THE BOTTOM VIEW
+		#	a list of 20-sided dice rolls.
 		#	a version of the source image with additional cool markup.
 		
 		# Generate sample data.
 		count = random.randrange(1, 4)
 		out = []
 		for i in range(count):
-			sides = random.choice([4, 6, 8, 12, 20])
-			roll = random.randrange(1, sides)
-			out.append((sides, roll))
+			roll = random.randrange(1, 20)
+			out.append(roll)
 		
 		# Modify image.
 		org = (int(image.shape[1] / 2), int(image.shape[0] / 2))

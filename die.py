@@ -14,6 +14,7 @@
 ###############################################################################
 
 import numpy as np
+from scipy import stats
 
 class Die(object):
 	def __init__(self, name, sides):
@@ -21,6 +22,18 @@ class Die(object):
 		self.sides = sides
 		self.count = np.zeros(self.sides)
 	
-	def chisquared(self):
+	def add_roll(self, roll):
+		self.count[roll - 1] += 1
+	
+	def average(self):
+		rollsum = 0
+		for side in range(self.sides):
+			rollsum += (side + 1) * self.count[side]
+		return rollsum / np.sum(self.count)
+	
+	def rolls(self):
+		return int(np.sum(self.count))
+	
+	def chi_squared(self):
 		# should calculated the chi squared of the count array
-		return 0.0
+		return stats.chisquare(self.count)[0]
