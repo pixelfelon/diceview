@@ -14,16 +14,14 @@
 ###############################################################################
 
 import math
-import os
-import time
 from enum import Enum
 
 import tkinter
+from tkinter import font
 from tkinter import W, E, N, S
 import cv2
 from PIL import Image, ImageTk
-import seaborn as sns
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
 from vision import VisionThread
@@ -50,8 +48,10 @@ class DiceviewApp:
 		SAMPLE_READY = 2
 	
 	PADDING = 5
-	ROWMIN = 150
-	COLMIN = 500
+	ROWMIN = 400
+	COLMIN = 800
+	
+	FACES = 20
 	
 	def __init__(self):
 		self.root = tkinter.Tk()
@@ -70,36 +70,66 @@ class DiceviewApp:
 		self.root.configure(bg="#ddd", padx=self.PADDING, pady=self.PADDING)
 		self.root.rowconfigure(0, minsize=self.ROWMIN, weight=1)
 		self.root.rowconfigure(1, minsize=self.ROWMIN, weight=1)
-		self.root.rowconfigure(2, minsize=self.ROWMIN, weight=1)
-		self.root.rowconfigure(3, minsize=self.ROWMIN, weight=1)
-		self.root.columnconfigure(0, minsize=self.COLMIN, weight=2)
+		self.root.columnconfigure(0, minsize=self.COLMIN, weight=1)
 		self.root.columnconfigure(1, minsize=self.COLMIN, weight=1)
-		self.root.minsize(self.PADDING * 6 + self.COLMIN * 2, self.PADDING * 10 + self.ROWMIN * 4)
+		self.root.minsize(self.PADDING * 6 + self.COLMIN * 2, self.PADDING * 6 + self.ROWMIN * 2)
 		
+		self.graph_bar = tkinter.Frame(self.root)
+		self.graph_chi = tkinter.Frame(self.root, bg='#000')
+		self.graph_bar.grid(row=0, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
+		self.graph_chi.grid(row=0, column=1, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
+		self.graph_bar.pack_propagate(False)
+		self.graph_chi.pack_propagate(False)
 		self._nullfig = Figure()
-		self.graph1 = FigureCanvasTkAgg(self._nullfig, master=self.root)
-		self.graph2 = FigureCanvasTkAgg(self._nullfig, master=self.root)
-		self.graph3 = FigureCanvasTkAgg(self._nullfig, master=self.root)
-		self.graph4 = FigureCanvasTkAgg(self._nullfig, master=self.root)
-		self.graph_chi = FigureCanvasTkAgg(self._nullfig, master=self.root)
-		self.graph1.get_tk_widget().grid(row=0, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
-		self.graph2.get_tk_widget().grid(row=1, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
-		self.graph3.get_tk_widget().grid(row=2, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
-		self.graph4.get_tk_widget().grid(row=3, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
-		self.graph_chi.get_tk_widget().grid(
-			row=0, column=1, rowspan=2, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
+		self.canvas_bar = FigureCanvasTkAgg(self._nullfig, master=self.graph_bar)
+		self.canvas_chi = FigureCanvasTkAgg(self._nullfig, master=self.graph_chi)
+		self.canvas_bar.get_tk_widget().pack(fill="both", expand=True)
+		self.canvas_chi.get_tk_widget().pack(fill="both", expand=True)
 		
-		self.infoframe = tkinter.Frame(self.root, bg="#eee")
-		self.infoframe.grid(row=2, column=1, rowspan=2, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
-		self.infoframe.pack_propagate(False)
+		self.imframe = tkinter.Frame(self.root, bg="#eee")
+		self.imframe.grid(row=1, column=1, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
+		self.imframe.pack_propagate(False)
 		
-		self.statframe = tkinter.Frame(self.infoframe, bg="#eee", width=200)
-		self.statframe.pack(fill=tkinter.Y, padx=10, side=tkinter.LEFT)
-		self.statframe.pack_propagate(False)
-		
-		self.tkimage = tkinter.Label(self.infoframe, bd=0, bg='#eee')
+		self.tkimage = tkinter.Label(self.imframe, bd=0, bg='#eee')
 		self.tkimage.pack(fill="both", expand=True)
-		self.tkimage.pack_propagate(False)
+		
+		self.statframe = tkinter.Frame(self.root, bg="#eee")
+		self.statframe.grid(row=1, column=0, sticky=W + E + N + S, padx=self.PADDING, pady=self.PADDING)
+		self.statframe.rowconfigure(0, weight=1)
+		self.statframe.rowconfigure(1, weight=1)
+		self.statframe.columnconfigure(0, weight=1)
+		self.statframe.columnconfigure(1, weight=1)
+		
+		self.lilfont = font.Font(family='Trebuchet MS', size=25, weight='normal')
+		self.bigfont = font.Font(family='Trebuchet MS', size=75, weight='bold')
+		
+		positions = {
+			"Actuations": (0, 0),
+			"Dice Rolls": (0, 1),
+			"Average Roll": (1, 0),
+			"Chi-Squared": (1, 1)
+		}
+		self.sf_subs = {}
+		self.sf_labels = {}
+		self.sf_vars = {}
+		for pos in positions:
+			self.sf_subs[pos] = tkinter.Frame(self.statframe, bg='#eee')
+			self.sf_subs[pos].grid(
+				row=positions[pos][0], column=positions[pos][1], sticky=W + E + N + S, padx=30, pady=30)
+			self.sf_subs[pos].rowconfigure(0, weight=1)
+			self.sf_subs[pos].rowconfigure(1, weight=5)
+			self.sf_subs[pos].columnconfigure(0, weight=1)
+			self.sf_subs[pos].grid_propagate(False)
+			self.sf_labels[pos] = tkinter.Label(self.sf_subs[pos], text=pos, font=self.lilfont, bg='#eee')
+			self.sf_labels[pos].grid(row=0, column=0, sticky=W + E)
+			self.sf_labels[pos].grid_propagate(False)
+			self.sf_vars[pos] = tkinter.Label(self.sf_subs[pos], text="0", font=self.bigfont, bg='#eee')
+			self.sf_vars[pos].grid(row=1, column=0, sticky=W + E)
+			self.sf_vars[pos].grid_propagate(False)
+		
+		self.actuations = 0
+		self.chi_history = []
+		self.die = Die("D20", 20)
 		
 		self.vision = VisionThread()
 		self.vision.start()
@@ -133,7 +163,23 @@ class DiceviewApp:
 		self.tkimage.image = frame
 	
 	def update_stats(self, dice):
-		pass
+		self.actuations += 1
+		for roll in dice:
+			self.die.add_roll(roll)
+		self.chi_history.append(self.die.chi_squared())
+		self.sf_vars["Actuations"].configure(text="{:d}".format(self.actuations))
+		self.sf_vars["Dice Rolls"].configure(text="{:d}".format(self.die.rolls()))
+		self.sf_vars["Average Roll"].configure(text="{:2.2f}".format(self.die.average()))
+		self.sf_vars["Chi-Squared"].configure(text="{:2.2f}".format(self.chi_history[-1]))
+		
+		class FakeEvent:
+			def __init__(self, width, height):
+				self.width = width
+				self.height = height
+		self.canvas_chi.figure = graphs.chi_graph(self.chi_history)
+		self.canvas_chi.resize(FakeEvent(self.graph_chi.winfo_width(), self.graph_chi.winfo_height()))
+		self.canvas_bar.figure = graphs.count_graph(self.die)
+		self.canvas_bar.resize(FakeEvent(self.graph_bar.winfo_width(), self.graph_bar.winfo_height()))
 	
 	def shutdown(self):
 		self.root.destroy()
