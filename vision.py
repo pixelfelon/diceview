@@ -18,6 +18,7 @@ import threading
 import cv2
 import numpy as np
 from collections import namedtuple
+import os
 
 from motion import Motion
 import cameras
@@ -38,7 +39,7 @@ def subtract_and_mask(img, ref):
 
 
 class MatchWithSIFT(object):
-	Referance_Points = namedtuple('Referance_Points', ['kp', 'des', 'img'])
+	Reference_Points = namedtuple('Reference_Points', ['kp', 'des', 'img'])
 
 	def __init__(self):
 		self.sift = cv2.xfeatures2d.SIFT_create()
@@ -47,11 +48,11 @@ class MatchWithSIFT(object):
 
 	def add_ref(self, key, img):
 		kp, des = self.sift.detectAndCompute(img, None)
-		self.ref_lib[key] = self.Referance_Points(kp, des, img)
+		self.ref_lib[key] = self.Reference_Points(kp, des, img)
 
 	def load_refs(self):
 		for i in range(1, 20 + 1):
-			self.add_ref(str(i), cv2.imread('{}-Grey.jpg'.format(i), 0))
+			self.add_ref(str(i), cv2.imread(os.path.join('refim', '{}-Grey.jpg'.format(i)), 0))
 
 	def knn_match(self, des1, des2):
 		matches = self.bf.knnMatch(des1, des2, k=2)
