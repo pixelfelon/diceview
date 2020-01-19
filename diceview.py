@@ -21,7 +21,7 @@ from tkinter import font
 from tkinter import W, E, N, S
 import cv2
 from PIL import Image, ImageTk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
 from vision import VisionThread
@@ -59,11 +59,8 @@ class DiceviewApp:
 		try:
 			self.root.state("zoomed")
 		except (tkinter.TclError):
-
 			pass
-
 			m = self.root.maxsize()
-
 			self.root.geometry('{}x{}+0+0'.format(*m))
 		self.root.focus_set()
 		

@@ -139,8 +139,8 @@ class VisionThread(threading.Thread):
 		self.restart()
 	
 	def _cam_start(self):
-		cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-		if not cap.isOpened():
+		self._cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+		if not self._cap.isOpened():
 			print("Couldn't open camera!")
 			self.restart()
 	
