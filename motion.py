@@ -21,7 +21,7 @@ class Motion(object):
 		# Set up connection to controller.
 		self.ser = None
 		try:
-			self.ser = serial.Serial('/dev/ttyACM0', 115200)
+			self.ser = serial.Serial('COM3', 115200)
 			time.sleep(0.1)
 			self.ser.write('s170\r\n'.encode())
 			self.ser.flush()
@@ -38,7 +38,7 @@ class Motion(object):
 			time.sleep(1)
 			self.ser.write('s170\r\n'.encode())
 			self.ser.flush()
-			time.sleep(1)
+			time.sleep(3)
 		else:
 			time.sleep(0.5)
 	

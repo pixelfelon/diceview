@@ -125,10 +125,14 @@ class WebCam(BaseCam):
 		return True
 	
 	def get_frame(self):
-		data = urllib.request.urlopen(self.url)
-		bytes = np.asarray(bytearray(data.read()), dtype=np.uint8)
-		frame = cv2.imdecode(bytes, -1)
-		return frame
+		while True:
+			try:
+				data = urllib.request.urlopen(self.url)
+				bytes = np.asarray(bytearray(data.read()), dtype=np.uint8)
+				frame = cv2.imdecode(bytes, -1)
+				return frame
+			except:
+				pass
 
 
 def get_best_cam():

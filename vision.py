@@ -76,7 +76,7 @@ class MatchWithSIFT(object):
 		img_kp, img_des = self.sift.detectAndCompute(img, None)
 		
 		best_key = None
-		best_score = None
+		best_score = 0
 		
 		for key, value in self.ref_lib.items():
 			matches = self.knn_match(value.des, img_des)
@@ -130,6 +130,7 @@ class VisionThread(threading.Thread):
 			self._sift = MatchWithSIFT()
 			self._sift.load_refs()
 		except (AttributeError, cv2.error):
+			raise
 			print("SIFT not available! Won't parse dice!")
 		
 		_run = False
@@ -207,67 +208,72 @@ class VisionThread(threading.Thread):
 		self.restart()
 	
 	def _process_image(self, image):
-		# Process an opencv image to find dice.
-		# Will return two values:
-		# - a list of 20-sided dice rolls.
-		# - a version of the source image with additional cool markup.
-		img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-		ref = cv2.imread(os.path.join('refim', 'ref.jpg'), 0)
-		if img.shape[0] != ref.shape[0] or img.shape[1] != ref.shape[1]:
-			print("Ref image size mismatch!")
-			image = cv2.resize(image, (ref.shape[1], ref.shape[0]))
-			img = cv2.resize(img, (ref.shape[1], ref.shape[0]))
-		
-		masked_img = subtract_and_mask(img, ref)
-		
-		# cv2.imshow('image', masked_img)
-		# cv2.waitKey(0)
-		
-		ret, threshold_img = cv2.threshold(masked_img, 25, 255, cv2.THRESH_BINARY)
-		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
-		threshold_img = cv2.morphologyEx(threshold_img, cv2.MORPH_OPEN, kernel)
-		
-		
-		# Setup SimpleBlobDetector parameters.
-		params = cv2.SimpleBlobDetector_Params()
-		
-		params.blobColor = 255
-		params.filterByColor = True
-		params.filterByArea = True
-		params.minDistBetweenBlobs = 2
-		params.minArea = 2000
-		# Blobs larger than 50 pixels are noise
-		params.maxArea = 50000
-		# enabling these can cause us to miss points
-		params.filterByCircularity = False
-		params.filterByConvexity = False
-		params.filterByInertia = False
-		
-		# Create a detector with the parameters
-		detector = cv2.SimpleBlobDetector_create(params)
-		
-		# Detect blobs.
-		keypoints = detector.detect(threshold_img)
-		
-		out_arr = list()
-		
-		for i, point in enumerate(keypoints):
-			y, x = point.pt
-			found_dice = image[int(x - DICE_SIZE * 0.5):int(x - DICE_SIZE * 0.5 + DICE_SIZE), int(y - DICE_SIZE * 0.5):int(y - DICE_SIZE * 0.5 + DICE_SIZE)]
+		try:
+			# Process an opencv image to find dice.
+			# Will return two values:
+			# - a list of 20-sided dice rolls.
+			# - a version of the source image with additional cool markup.
+			img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+			ref = cv2.imread(os.path.join('refim', 'ref.jpg'), 0)
+			if img.shape[0] != ref.shape[0] or img.shape[1] != ref.shape[1]:
+				print("Ref image size mismatch!")
+				image = cv2.resize(image, (ref.shape[1], ref.shape[0]))
+				img = cv2.resize(img, (ref.shape[1], ref.shape[0]))
 			
-			die_num = None
-			if self._sift is not None:
-				dice_grey = cv2.cvtColor(found_dice, cv2.COLOR_BGR2GRAY)
-				die_num = self._sift.find_match(dice_grey)
-			if die_num is not None:
-				out_arr.append(int(die_num))
+			masked_img = subtract_and_mask(img, ref)
 			
-			# img_col = cv2.putText(img_col, str(die_num), (int(y) - 10, int(x) + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-			# cv2.imshow("Keypoint", found_dice)
+			# cv2.imshow('image', masked_img)
 			# cv2.waitKey(0)
-		
-		# Draw detected blobs as red circles.
-		# cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
-		image = cv2.drawKeypoints(threshold_img, keypoints, np.array([]), (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-		
-		return out_arr, image
+			
+			ret, threshold_img = cv2.threshold(masked_img, 40, 255, cv2.THRESH_BINARY)
+			kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+			threshold_img = cv2.morphologyEx(threshold_img, cv2.MORPH_OPEN, kernel)
+			
+			
+			# Setup SimpleBlobDetector parameters.
+			params = cv2.SimpleBlobDetector_Params()
+			
+			params.blobColor = 255
+			params.filterByColor = True
+			params.filterByArea = True
+			params.minDistBetweenBlobs = 2
+			params.minArea = 2000
+			# Blobs larger than 50 pixels are noise
+			params.maxArea = 50000
+			# enabling these can cause us to miss points
+			params.filterByCircularity = False
+			params.filterByConvexity = False
+			params.filterByInertia = False
+			
+			# Create a detector with the parameters
+			detector = cv2.SimpleBlobDetector_create(params)
+			
+			# Detect blobs.
+			keypoints = detector.detect(threshold_img)
+			
+			out_arr = list()
+			
+			for i, point in enumerate(keypoints):
+				y, x = point.pt
+				found_dice = image[int(x - DICE_SIZE * 0.5):int(x - DICE_SIZE * 0.5 + DICE_SIZE), int(y - DICE_SIZE * 0.5):int(y - DICE_SIZE * 0.5 + DICE_SIZE)]
+				
+				die_num = None
+				if self._sift is not None:
+					dice_grey = cv2.cvtColor(found_dice, cv2.COLOR_BGR2GRAY)
+					die_num = self._sift.find_match(dice_grey)
+				print(die_num)
+				if die_num is not None:
+					out_arr.append(int(die_num))
+				
+				# img_col = cv2.putText(img_col, str(die_num), (int(y) - 10, int(x) + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+				# cv2.imshow("Keypoint", found_dice)
+				# cv2.waitKey(0)
+			
+			# Draw detected blobs as red circles.
+			# cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
+			image = cv2.drawKeypoints(threshold_img, keypoints, np.array([]), (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+			print("-------------------------")
+			print(out_arr, flush=True)
+			return out_arr, image
+		except:
+			return [], image
